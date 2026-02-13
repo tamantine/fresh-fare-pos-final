@@ -1,4 +1,4 @@
-// Fresh Fare POS - Aplicação Principal
+// Fresh Fare POS - Aplicação Principal Completa
 // React via CDN - Sem build necessário
 
 const { useState, useEffect, useRef } = React;
@@ -55,10 +55,18 @@ const showToast = (message, type = 'success') => {
 const Sidebar = ({ currentPage, setCurrentPage }) => {
     const menuItems = [
         { id: 'dashboard', icon: '📊', label: 'Painel' },
-        { id: 'pdv', icon: '🛒', label: 'PDV (Caixa)' },
+        { id: 'pdv', icon: '🛒', label: 'PDV (Caixa)', isNewTab: true },
         { id: 'estoque', icon: '📦', label: 'Estoque' },
         { id: 'precificacao', icon: '💰', label: 'Precificação' },
     ];
+
+    const handleNavigation = (item) => {
+        if (item.isNewTab) {
+            window.open(window.location.href + '?page=pdv', '_blank');
+        } else {
+            setCurrentPage(item.id);
+        }
+    };
 
     return (
         <div className="w-64 bg-verde-escuro h-screen fixed left-0 top-0 text-white flex flex-col">
@@ -76,7 +84,7 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
                 {menuItems.map(item => (
                     <button
                         key={item.id}
-                        onClick={() => setCurrentPage(item.id)}
+                        onClick={() => handleNavigation(item)}
                         className={`w-full px-6 py-4 flex items-center gap-4 transition-all ${
                             currentPage === item.id 
                                 ? 'bg-verde-principal text-white' 
@@ -100,7 +108,148 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
 };
 
 // ========================================
-// COMPONENTE: PDV (Ponto de Venda) - NOVO
+// COMPONENTE: DASHBOARD
+// ========================================
+const Dashboard = () => {
+    const [metrics, setMetrics] = useState({
+        faturamentoDia: 0,
+        vendasRealizadas: 0,
+        ticketMedio: 0,
+        itensVendidos: 0
+    });
+    const [ultimasVendas, setUltimasVendas] = useState([]);
+
+    useEffect(() => {
+        carregarDados();
+    }, []);
+
+    const carregarDados = async () => {
+        try {
+            const hoje = new Date().toISOString().split('T')[0];
+            const { data: vendas, error } = await supabase
+                .from('vendas')
+                .select('*, itens_venda(*)')
+                .gte('data_venda', hoje)
+                .eq('status', 'FINALIZADA')
+                .order('data_venda', { ascending: false });
+
+            if (error) throw error;
+
+            const faturamento = vendas?.reduce((sum, v) => sum + parseFloat(v.total || 0), 0) || 0;
+            const quantidade = vendas?.length || 0;
+            const ticket = quantidade > 0 ? faturamento / quantidade : 0;
+            
+            let totalItens = 0;
+            vendas?.forEach(venda => {
+                totalItens += venda.itens_venda?.length || 0;
+            });
+
+            setMetrics({
+                faturamentoDia: faturamento,
+                vendasRealizadas: quantidade,
+                ticketMedio: ticket,
+                itensVendidos: totalItens
+            });
+
+            setUltimasVendas(vendas?.slice(0, 10) || []);
+        } catch (error) {
+            console.error('Erro ao carregar dados:', error);
+            showToast('Erro ao carregar dados do dashboard', 'error');
+        }
+    };
+
+    return (
+        <div className="p-8 animate-fade-in">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-800">Dashboard de Gestão</h1>
+                <p className="text-gray-600 mt-2">Visão geral do dia {new Date().toLocaleDateString('pt-BR')}</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="card bg-verde-escuro text-white hover-lift">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-green-200 text-sm mb-2">Faturamento Hoje</p>
+                            <h3 className="text-3xl font-bold">{formatCurrency(metrics.faturamentoDia)}</h3>
+                        </div>
+                        <span className="text-4xl">💵</span>
+                    </div>
+                </div>
+
+                <div className="card bg-verde-escuro text-white hover-lift">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-green-200 text-sm mb-2">Vendas Realizadas</p>
+                            <h3 className="text-3xl font-bold">{metrics.vendasRealizadas}</h3>
+                        </div>
+                        <span className="text-4xl">📈</span>
+                    </div>
+                </div>
+
+                <div className="card bg-verde-escuro text-white hover-lift">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-green-200 text-sm mb-2">Ticket Médio</p>
+                            <h3 className="text-3xl font-bold">{formatCurrency(metrics.ticketMedio)}</h3>
+                        </div>
+                        <span className="text-4xl">🧾</span>
+                    </div>
+                </div>
+
+                <div className="card bg-verde-escuro text-white hover-lift">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-green-200 text-sm mb-2">Itens Vendidos</p>
+                            <h3 className="text-3xl font-bold">{metrics.itensVendidos}</h3>
+                        </div>
+                        <span className="text-4xl">🛍️</span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="card">
+                <h2 className="text-xl font-bold text-gray-800 mb-6">Últimas Vendas</h2>
+                <div className="overflow-x-auto">
+                    <table className="w-full table-zebra">
+                        <thead>
+                            <tr className="border-b border-gray-200">
+                                <th className="text-left py-3 px-4 text-gray-600 font-semibold">ID</th>
+                                <th className="text-left py-3 px-4 text-gray-600 font-semibold">HORA</th>
+                                <th className="text-left py-3 px-4 text-gray-600 font-semibold">PAGAMENTO</th>
+                                <th className="text-right py-3 px-4 text-gray-600 font-semibold">VALOR</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {ultimasVendas.length > 0 ? (
+                                ultimasVendas.map(venda => (
+                                    <tr key={venda.id}>
+                                        <td className="py-3 px-4">#{venda.id}</td>
+                                        <td className="py-3 px-4">{new Date(venda.data_venda).toLocaleTimeString('pt-BR')}</td>
+                                        <td className="py-3 px-4">
+                                            <span className="badge badge-green">{venda.forma_pagamento}</span>
+                                        </td>
+                                        <td className="py-3 px-4 text-right font-semibold text-verde-principal">
+                                            {formatCurrency(venda.total)}
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="4" className="py-8 text-center text-gray-500">
+                                        Nenhuma venda realizada hoje
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ========================================
+// COMPONENTE: PDV (Ponto de Venda) - PROFISSIONAL
 // ========================================
 const PDV = () => {
     const [carrinho, setCarrinho] = useState([]);
@@ -235,11 +384,8 @@ const PDV = () => {
                 </div>
             </div>
 
-            {/* Área Principal */}
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-4 p-6 overflow-hidden">
-                {/* Coluna Esquerda - Busca */}
                 <div className="lg:col-span-3 space-y-4 flex flex-col overflow-auto">
-                    {/* Status do Caixa */}
                     <div className="card bg-verde-escuro text-white shadow-md">
                         <div className="flex items-center justify-between">
                             <div>
@@ -250,11 +396,8 @@ const PDV = () => {
                         </div>
                     </div>
 
-                    {/* Busca de Produtos */}
                     <div className="card relative">
-                        <label className="block text-sm font-bold text-gray-700 mb-2">
-                            🔍 BUSCAR PRODUTO (F1)
-                        </label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">🔍 BUSCAR PRODUTO (F1)</label>
                         <div className="relative">
                             <input
                                 ref={inputRef}
@@ -270,19 +413,18 @@ const PDV = () => {
                                     }
                                 }}
                                 placeholder="Código, nome ou ID..."
-                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-verde-principal focus:ring-2 focus:ring-verde-claro text-lg font-semibold"
+                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-verde-principal text-lg font-semibold"
                             />
                             {carregandoSugestoes && <span className="absolute right-3 top-3 text-gray-400">⏳</span>}
                         </div>
                         
-                        {/* Sugestões */}
                         {sugestoesProducts.length > 0 && (
                             <div className="absolute top-20 left-0 right-0 bg-white border-2 border-verde-principal rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
                                 {sugestoesProducts.map(produto => (
                                     <button
                                         key={produto.id}
                                         onClick={() => selecionarProduto(produto)}
-                                        className="w-full text-left px-4 py-3 hover:bg-verde-claro border-b border-gray-200 last:border-b-0 transition-colors"
+                                        className="w-full text-left px-4 py-3 hover:bg-verde-claro border-b border-gray-200 transition-colors"
                                     >
                                         <div className="font-semibold text-gray-800">{produto.nome}</div>
                                         <div className="text-sm text-gray-600">{formatCurrency(produto.preco_venda)} • Estoque: {produto.estoque_atual}</div>
@@ -292,7 +434,6 @@ const PDV = () => {
                         )}
                     </div>
 
-                    {/* Produto Selecionado */}
                     {produtoSelecionado && (
                         <div className="card bg-verde-claro border-2 border-verde-principal">
                             <div className="mb-4">
@@ -317,22 +458,14 @@ const PDV = () => {
                                     />
                                 </div>
                             </div>
-                            <button
-                                onClick={adicionarAoCarrinho}
-                                className="w-full btn-primary"
-                            >
-                                ➕ Adicionar ao Carrinho
-                            </button>
+                            <button onClick={adicionarAoCarrinho} className="w-full btn-primary">➕ Adicionar ao Carrinho</button>
                         </div>
                     )}
                 </div>
 
-                {/* Coluna Direita - Carrinho e Resumo */}
                 <div className="lg:col-span-2 flex flex-col space-y-4 overflow-auto">
-                    {/* Carrinho */}
                     <div className="card flex-1 overflow-auto">
                         <h2 className="text-xl font-bold text-gray-800 mb-4">🛒 Carrinho</h2>
-                        
                         {carrinho.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-40 text-gray-400">
                                 <span className="text-5xl mb-2">🛒</span>
@@ -340,20 +473,15 @@ const PDV = () => {
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                {carrinho.map((item, index) => (
-                                    <div key={item.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg hover:bg-verde-claro transition-colors">
+                                {carrinho.map((item) => (
+                                    <div key={item.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg hover:bg-verde-claro">
                                         <div className="flex-1">
                                             <div className="font-semibold text-gray-800">{item.descricao}</div>
                                             <div className="text-sm text-gray-600">{item.quantidade} {item.tipo_venda} × {formatCurrency(item.preco_unitario)}</div>
                                         </div>
                                         <div className="text-right">
                                             <div className="font-bold text-verde-principal">{formatCurrency(item.subtotal)}</div>
-                                            <button
-                                                onClick={() => removerDoCarrinho(item.id)}
-                                                className="text-red-600 hover:text-red-800 text-sm mt-1"
-                                            >
-                                                Remover
-                                            </button>
+                                            <button onClick={() => removerDoCarrinho(item.id)} className="text-red-600 text-sm mt-1">Remover</button>
                                         </div>
                                     </div>
                                 ))}
@@ -361,42 +489,26 @@ const PDV = () => {
                         )}
                     </div>
 
-                    {/* Resumo */}
                     <div className="card bg-gradient-to-br from-verde-claro to-white border-2 border-verde-principal shadow-lg">
                         <div className="space-y-3">
-                            <div className="flex justify-between items-center pb-2 border-b border-gray-300">
+                            <div className="flex justify-between pb-2 border-b border-gray-300">
                                 <span className="text-gray-700 font-semibold">Itens:</span>
                                 <span className="text-lg font-bold">{carrinho.length}</span>
                             </div>
                             <div className="bg-white p-4 rounded-lg border-2 border-verde-principal">
                                 <p className="text-sm text-gray-600 mb-1">TOTAL A PAGAR</p>
-                                <p className="text-4xl font-black text-verde-escuro">
-                                    {formatCurrency(calcularTotal())}
-                                </p>
+                                <p className="text-4xl font-black text-verde-escuro">{formatCurrency(calcularTotal())}</p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Ações */}
                     <div className="space-y-2">
-                        <button
-                            onClick={limparCarrinho}
-                            className="w-full btn-danger"
-                        >
-                            🗑️ Cancelar Venda
-                        </button>
-                        <button
-                            onClick={() => carrinho.length > 0 && setMostrarModalPagamento(true)}
-                            disabled={carrinho.length === 0}
-                            className="w-full btn-warning disabled:opacity-50"
-                        >
-                            💳 PAGAMENTO (F6)
-                        </button>
+                        <button onClick={limparCarrinho} className="w-full btn-danger">🗑️ Cancelar Venda</button>
+                        <button onClick={() => carrinho.length > 0 && setMostrarModalPagamento(true)} disabled={carrinho.length === 0} className="w-full btn-warning">💳 PAGAMENTO (F6)</button>
                     </div>
                 </div>
             </div>
 
-            {/* Barra de Atalhos */}
             <div className="bg-verde-escuro text-white px-6 py-2 text-xs font-semibold flex items-center justify-between shadow-lg">
                 <div className="flex gap-4">
                     <span><kbd className="bg-verde-principal px-2 py-1 rounded">F1</kbd> Buscar</span>
@@ -407,16 +519,12 @@ const PDV = () => {
                 <span>🟢 Online</span>
             </div>
 
-            {/* Modal Pagamento */}
             {mostrarModalPagamento && (
                 <ModalPagamento
                     total={calcularTotal()}
                     carrinho={carrinho}
                     onClose={() => setMostrarModalPagamento(false)}
-                    onSuccess={() => {
-                        setCarrinho([]);
-                        setMostrarModalPagamento(false);
-                    }}
+                    onSuccess={() => { setCarrinho([]); setMostrarModalPagamento(false); }}
                 />
             )}
         </div>
@@ -435,10 +543,7 @@ const ModalPagamento = ({ total, carrinho, onClose, onSuccess }) => {
     const troco = formaPagamento === 'DINHEIRO' ? valorRecebido - totalComDesconto : 0;
 
     const finalizarVenda = async () => {
-        if (!formaPagamento) {
-            showToast('Selecione uma forma de pagamento!', 'error');
-            return;
-        }
+        if (!formaPagamento) { showToast('Selecione uma forma de pagamento!', 'error'); return; }
 
         try {
             const { data: venda, error: erroVenda } = await supabase
@@ -451,8 +556,7 @@ const ModalPagamento = ({ total, carrinho, onClose, onSuccess }) => {
                     forma_pagamento: formaPagamento,
                     status: 'FINALIZADA'
                 }])
-                .select()
-                .single();
+                .select().single();
 
             if (erroVenda) throw erroVenda;
 
@@ -466,10 +570,7 @@ const ModalPagamento = ({ total, carrinho, onClose, onSuccess }) => {
                 tipo_venda: item.tipo_venda
             }));
 
-            const { error: erroItens } = await supabase
-                .from('itens_venda')
-                .insert(itensVenda);
-
+            const { error: erroItens } = await supabase.from('itens_venda').insert(itensVenda);
             if (erroItens) throw erroItens;
 
             showToast(`✅ Venda finalizada! ${formaPagamento === 'DINHEIRO' ? `Troco: ${formatCurrency(troco)}` : ''}`, 'success');
@@ -487,77 +588,35 @@ const ModalPagamento = ({ total, carrinho, onClose, onSuccess }) => {
                     <h2 className="text-2xl font-bold text-gray-800">Finalizar Pagamento</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
                 </div>
-
                 <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                    <div className="flex justify-between mb-2">
-                        <span>Subtotal:</span>
-                        <span className="font-semibold">{formatCurrency(total)}</span>
-                    </div>
+                    <div className="flex justify-between mb-2"><span>Subtotal:</span><span className="font-semibold">{formatCurrency(total)}</span></div>
                     <div className="flex justify-between mb-2">
                         <span>Desconto:</span>
-                        <input
-                            type="number"
-                            value={desconto}
-                            onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)}
-                            className="w-32 px-2 py-1 border rounded text-right"
-                        />
+                        <input type="number" value={desconto} onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)} className="w-32 px-2 py-1 border rounded text-right" />
                     </div>
-                    <div className="border-t pt-2 flex justify-between">
-                        <span className="text-lg font-bold">Total a Pagar:</span>
-                        <span className="text-2xl font-bold text-verde-principal">
-                            {formatCurrency(totalComDesconto)}
-                        </span>
-                    </div>
+                    <div className="border-t pt-2 flex justify-between"><span className="text-lg font-bold">Total a Pagar:</span><span className="text-2xl font-bold text-verde-principal">{formatCurrency(totalComDesconto)}</span></div>
                 </div>
-
                 <div className="mb-6">
                     <label className="block text-sm font-semibold text-gray-700 mb-3">Forma de Pagamento</label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {['DINHEIRO', 'CREDITO', 'DEBITO', 'PIX'].map(forma => (
-                            <button
-                                key={forma}
-                                onClick={() => setFormaPagamento(forma)}
-                                className={`p-4 rounded-lg border-2 transition-all ${
-                                    formaPagamento === forma
-                                        ? 'border-verde-principal bg-verde-claro'
-                                        : 'border-gray-200 hover:border-verde-principal'
-                                }`}
-                            >
-                                <div className="text-2xl mb-2">
-                                    {forma === 'DINHEIRO' ? '💵' : forma === 'PIX' ? '📱' : '💳'}
-                                </div>
+                            <button key={forma} onClick={() => setFormaPagamento(forma)} className={`p-4 rounded-lg border-2 transition-all ${formaPagamento === forma ? 'border-verde-principal bg-verde-claro' : 'border-gray-200 hover:border-verde-principal'}`}>
+                                <div className="text-2xl mb-2">{forma === 'DINHEIRO' ? '💵' : forma === 'PIX' ? '📱' : '💳'}</div>
                                 <div className="text-sm font-semibold">{forma}</div>
                             </button>
                         ))}
                     </div>
                 </div>
-
                 {formaPagamento === 'DINHEIRO' && (
                     <div className="mb-6">
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Valor Recebido</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            value={valorRecebido}
-                            onChange={(e) => setValorRecebido(parseFloat(e.target.value) || 0)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-xl font-bold"
-                        />
-                        {troco >= 0 && (
-                            <div className="mt-2 text-lg">
-                                <span className="text-gray-600">Troco: </span>
-                                <span className="font-bold text-verde-principal">{formatCurrency(troco)}</span>
-                            </div>
-                        )}
+                        <input type="number" step="0.01" value={valorRecebido} onChange={(e) => setValorRecebido(parseFloat(e.target.value) || 0)} className="w-full px-4 py-3 border border-gray-300 rounded-lg text-xl font-bold" />
+                        {troco >= 0 && <div className="mt-2 text-lg text-gray-600">Troco: <span className="font-bold text-verde-principal">{formatCurrency(troco)}</span></div>}
                     </div>
                 )}
-
                 <div className="flex gap-4">
-                    <button onClick={onClose} className="flex-1 px-6 py-3 bg-gray-200 rounded-lg font-semibold hover:bg-gray-300">
-                        Cancelar
-                    </button>
-                    <button onClick={finalizarVenda} className="flex-1 btn-primary">
-                        ✅ Finalizar Venda
-                    </button>
+                    <button onClick={onClose} className="flex-1 px-6 py-3 bg-gray-200 rounded-lg font-semibold">Cancelar</button>
+                    <button onClick={finalizarVenda} className="flex-1 btn-primary">✅ Finalizar Venda</button>
                 </div>
             </div>
         </div>
@@ -565,21 +624,149 @@ const ModalPagamento = ({ total, carrinho, onClose, onSuccess }) => {
 };
 
 // ========================================
-// COMPONENTE: APP PRINCIPAL
+// COMPONENTE: ESTOQUE
 // ========================================
-const App = () => {
-    const [currentPage, setCurrentPage] = useState('pdv');
+const Estoque = () => {
+    const [produtos, setProdutos] = useState([]);
+    const [busca, setBusca] = useState('');
+    const [mostrarModal, setMostrarModal] = useState(false);
+
+    useEffect(() => { carregarProdutos(); }, []);
+
+    const carregarProdutos = async () => {
+        try {
+            const { data, error } = await supabase.from('produtos').select('*').order('nome');
+            if (error) throw error;
+            setProdutos(data || []);
+        } catch (error) { showToast('Erro ao carregar produtos', 'error'); }
+    };
+
+    const produtosFiltrados = produtos.filter(p => p.nome.toLowerCase().includes(busca.toLowerCase()) || (p.codigo_barras && p.codigo_barras.includes(busca)));
 
     return (
-        <div className="flex">
-            <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
-            <div className="ml-64 flex-1">
-                {currentPage === 'pdv' && <PDV />}
+        <div className="p-8 animate-fade-in">
+            <div className="mb-8"><h1 className="text-3xl font-bold text-gray-800">Gestão de Estoque</h1><p className="text-gray-600 mt-2">Controle seus produtos e preços</p></div>
+            <div className="flex items-center gap-4 mb-6">
+                <input type="text" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="🔍 Buscar por nome ou código..." className="flex-1 px-4 py-3 border border-gray-300 rounded-lg" />
+                <button onClick={() => setMostrarModal(true)} className="btn-primary">➕ Novo Produto</button>
+            </div>
+            <div className="card">
+                <div className="overflow-x-auto">
+                    <table className="w-full table-zebra">
+                        <thead><tr className="border-b-2 border-gray-200"><th className="text-left py-3 px-4">PRODUTO</th><th className="text-left py-3 px-4">CATEGORIA</th><th className="text-center py-3 px-4">TIPO</th><th className="text-right py-3 px-4">PREÇO</th><th className="text-center py-3 px-4">ESTOQUE</th></tr></thead>
+                        <tbody>
+                            {produtosFiltrados.map(produto => (
+                                <tr key={produto.id}>
+                                    <td className="py-3 px-4"><div className="font-semibold">{produto.nome}</div><div className="text-sm text-gray-500">ID: {produto.id}</div></td>
+                                    <td className="py-3 px-4"><span className="badge badge-green">{produto.categoria}</span></td>
+                                    <td className="py-3 px-4 text-center"><span className="badge badge-yellow">{produto.tipo_venda}</span></td>
+                                    <td className="py-3 px-4 text-right font-bold text-verde-principal">{formatCurrency(produto.preco_venda)}</td>
+                                    <td className="py-3 px-4 text-center"><span className={`font-semibold ${produto.estoque_atual <= produto.estoque_minimo ? 'text-red-600' : 'text-verde-principal'}`}>{produto.estoque_atual}</span></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {mostrarModal && <ModalProduto onClose={() => setMostrarModal(false)} onSuccess={() => { setMostrarModal(false); carregarProdutos(); }} />}
+        </div>
+    );
+};
+
+// ========================================
+// COMPONENTE: MODAL PRODUTO
+// ========================================
+const ModalProduto = ({ onClose, onSuccess }) => {
+    const [formData, setFormData] = useState({ nome: '', codigo_barras: '', categoria: '', tipo_venda: 'UN', preco_venda: 0, custo_nota: 0, quebra_perda: 0, margem_lucro: 0, estoque_atual: 0, estoque_minimo: 5 });
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const { error } = await supabase.from('produtos').insert([formData]);
+            if (error) throw error;
+            showToast('Produto cadastrado com sucesso!', 'success');
+            onSuccess();
+        } catch (error) { showToast('Erro ao cadastrar produto', 'error'); }
+    };
+    return (
+        <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-6"><h2 className="text-2xl font-bold text-gray-800">Novo Produto</h2><button onClick={onClose} className="text-gray-400 text-2xl">×</button></div>
+                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                        <input type="text" placeholder="Nome *" value={formData.nome} onChange={(e) => setFormData({...formData, nome: e.target.value})} className="w-full px-4 py-2 border rounded-lg" required />
+                        <input type="text" placeholder="Código de Barras" value={formData.codigo_barras} onChange={(e) => setFormData({...formData, codigo_barras: e.target.value})} className="w-full px-4 py-2 border rounded-lg" />
+                        <input type="text" placeholder="Categoria *" value={formData.categoria} onChange={(e) => setFormData({...formData, categoria: e.target.value})} className="w-full px-4 py-2 border rounded-lg" required />
+                        <select value={formData.tipo_venda} onChange={(e) => setFormData({...formData, tipo_venda: e.target.value})} className="w-full px-4 py-2 border rounded-lg"><option value="KG">KG</option><option value="UN">UN</option></select>
+                    </div>
+                    <div className="space-y-4">
+                        <input type="number" placeholder="Preço de Venda *" value={formData.preco_venda} onChange={(e) => setFormData({...formData, preco_venda: parseFloat(e.target.value)})} className="w-full px-4 py-2 border rounded-lg" required />
+                        <input type="number" placeholder="Estoque Atual" value={formData.estoque_atual} onChange={(e) => setFormData({...formData, estoque_atual: parseInt(e.target.value)})} className="w-full px-4 py-2 border rounded-lg" />
+                        <button type="submit" className="w-full btn-primary py-3">💾 Salvar Produto</button>
+                    </div>
+                </form>
             </div>
         </div>
     );
 };
 
-// Renderizar App
+// ========================================
+// COMPONENTE: PRECIFICAÇÃO
+// ========================================
+const Precificacao = () => {
+    const [dados, setDados] = useState({ nome: '', custoNota: 0, quebra: 15, margem: 50, tipoVenda: 'UN' });
+    const resultado = {
+        custoReal: dados.custoNota + (dados.custoNota * dados.quebra / 100),
+        lucro: (dados.custoNota + (dados.custoNota * dados.quebra / 100)) * (dados.margem / 100),
+        precoFinal: (dados.custoNota + (dados.custoNota * dados.quebra / 100)) * (1 + dados.margem / 100)
+    };
+    return (
+        <div className="p-8 animate-fade-in">
+            <div className="mb-8"><h1 className="text-3xl font-bold text-gray-800">Precificação Profissional</h1></div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="card bg-verde-escuro text-white p-6">
+                    <h2 className="text-xl font-bold mb-6">📦 Dados de Entrada</h2>
+                    <div className="space-y-4">
+                        <input type="number" value={dados.custoNota} onChange={(e) => setDados({...dados, custoNota: parseFloat(e.target.value)})} className="w-full px-4 py-2 text-gray-800 rounded-lg" placeholder="Custo na Nota" />
+                        <input type="number" value={dados.quebra} onChange={(e) => setDados({...dados, quebra: parseFloat(e.target.value)})} className="w-full px-4 py-2 text-gray-800 rounded-lg" placeholder="Quebra %" />
+                        <input type="number" value={dados.margem} onChange={(e) => setDados({...dados, margem: parseFloat(e.target.value)})} className="w-full px-4 py-2 text-gray-800 rounded-lg" placeholder="Margem %" />
+                    </div>
+                </div>
+                <div className="card bg-verde-claro p-6 text-center">
+                    <h2 className="text-xl font-bold text-verde-escuro mb-6">📊 Preço Sugerido</h2>
+                    <p className="text-5xl font-bold text-verde-escuro">{formatCurrency(resultado.precoFinal)}</p>
+                    <p className="text-gray-600 mt-2">/{dados.tipoVenda.toLowerCase()}</p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ========================================
+// COMPONENTE PRINCIPAL (APP)
+// ========================================
+const App = () => {
+    const [currentPage, setCurrentPage] = useState('dashboard');
+    const urlParams = new URLSearchParams(window.location.search);
+    const pageParam = urlParams.get('page');
+
+    useEffect(() => {
+        if (pageParam === 'pdv') {
+            setCurrentPage('pdv');
+        }
+    }, [pageParam]);
+
+    const renderPage = () => {
+        if (currentPage === 'pdv') return <PDV />;
+        return (
+            <div className="flex min-h-screen bg-gray-50">
+                <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
+                <div className="flex-1 ml-64">{currentPage === 'dashboard' ? <Dashboard /> : currentPage === 'estoque' ? <Estoque /> : <Precificacao />}</div>
+            </div>
+        );
+    };
+
+    return renderPage();
+};
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
