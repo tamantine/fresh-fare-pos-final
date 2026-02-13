@@ -240,3 +240,221 @@ textarea:focus {
 .toast-warning {
     border-left: 4px solid #F59E0B;
 }
+
+
+/* ========================================
+   ESTILOS ADICIONAIS PARA PDV PROFISSIONAL
+   ======================================== */
+
+/* Melhorias no Layout do PDV */
+.pdv-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.pdv-main {
+    flex: 1;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1rem;
+}
+
+/* Sugestões de Produtos */
+.product-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid #10B981;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.product-suggestion-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #E5E7EB;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.product-suggestion-item:hover {
+    background-color: #D1FAE5;
+}
+
+.product-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+/* Carrinho Item */
+.cart-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #F9FAFB;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+}
+
+.cart-item:hover {
+    background-color: #D1FAE5;
+    transform: translateX(2px);
+}
+
+/* Resumo da Venda */
+.sale-summary {
+    background: linear-gradient(135deg, #D1FAE5 0%, #ffffff 100%);
+    border: 2px solid #10B981;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.sale-summary-total {
+    font-size: 2.25rem;
+    font-weight: 900;
+    color: #064E3B;
+    line-height: 1;
+}
+
+/* Barra de Atalhos */
+.shortcuts-bar {
+    background: #064E3B;
+    color: white;
+    padding: 0.5rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.shortcuts-bar kbd {
+    background: #10B981;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-family: monospace;
+    margin-right: 0.25rem;
+}
+
+/* Animação de Entrada */
+@keyframes slideInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-in-up {
+    animation: slideInUp 0.3s ease-out;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #D1FAE5;
+    color: #064E3B;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.status-badge.online::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: #10B981;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Responsividade para PDV */
+@media (max-width: 1024px) {
+    .pdv-main {
+        grid-template-columns: 1fr;
+    }
+    
+    .pdv-right-panel {
+        order: -1;
+    }
+}
+
+/* Modo Claro para Legibilidade */
+.high-contrast-mode {
+    --bg-primary: #ffffff;
+    --text-primary: #000000;
+    --border-color: #000000;
+}
+
+.high-contrast-mode .card {
+    border: 2px solid var(--border-color);
+}
+
+/* Feedback Visual Melhorado */
+.input-focus {
+    border: 2px solid #10B981 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+}
+
+.btn-action {
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action:active {
+    transform: scale(0.98);
+}
+
+/* Tabela de Carrinho */
+.cart-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cart-table thead {
+    background: #F3F4F6;
+    border-bottom: 2px solid #10B981;
+}
+
+.cart-table th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+}
+
+.cart-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.cart-table tbody tr:hover {
+    background: #D1FAE5;
+}
