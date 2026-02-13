@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fresh Fare POS - Hortifruti Bom Preço</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React e ReactDOM via CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel Standalone para JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Supabase via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Lucide Icons via CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    
+    <!-- Configuração do Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'verde-principal': '#10B981',
+                        'verde-escuro': '#064E3B',
+                        'verde-claro': '#D1FAE5',
+                        'amarelo-dourado': '#F59E0B',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Estilos customizados -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+    
+    <!-- Módulos de Hardware -->
+    <script src="js/balanca.js"></script>
+    <script src="js/impressora.js"></script>
+    <script src="js/componente-hardware.js"></script>
+    
+    <!-- Script principal da aplicação -->
+    <script type="text/babel" src="js/app.js"></script>
+    
+    <!-- PDV Corrigido -->
+    <script type="text/babel" src="js/pdv-corrigido.js"></script>
+</body>
+</html>
