@@ -1,4 +1,4 @@
-// Fresh Fare POS - Aplicação Principal Completa
+// Fresh Fare POS - Aplicação Principal Completa com PDV Fullscreen
 // React via CDN - Sem build necessário
 
 const { useState, useEffect, useRef } = React;
@@ -62,7 +62,7 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
 
     const handleNavigation = (item) => {
         if (item.isNewTab) {
-            window.open(window.location.href + '?page=pdv', '_blank');
+            window.open(window.location.origin + window.location.pathname + '?page=pdv', '_blank');
         } else {
             setCurrentPage(item.id);
         }
@@ -249,7 +249,7 @@ const Dashboard = () => {
 };
 
 // ========================================
-// COMPONENTE: PDV (Ponto de Venda) - PROFISSIONAL
+// COMPONENTE: PDV (Ponto de Venda) - FULLSCREEN SEM ROLAGEM
 // ========================================
 const PDV = () => {
     const [carrinho, setCarrinho] = useState([]);
@@ -366,38 +366,40 @@ const PDV = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-            {/* Header */}
-            <div className="bg-verde-escuro text-white p-4 shadow-lg">
+        <div className="pdv-fullscreen">
+            {/* Header PDV */}
+            <div className="pdv-header">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <span className="text-4xl">🥬</span>
+                    <div className="flex items-center gap-2">
+                        <span className="text-3xl">🥬</span>
                         <div>
-                            <h1 className="text-2xl font-bold">Hortifruti Bom Preço</h1>
-                            <p className="text-green-300 text-sm">SISTEMA PDV PROFISSIONAL</p>
+                            <h1>Hortifruti Bom Preço</h1>
+                            <p>SISTEMA PDV PROFISSIONAL</p>
                         </div>
                     </div>
-                    <div className="flex gap-4 text-sm items-center">
+                    <div className="flex gap-3 text-xs items-center">
                         <span>📅 {new Date().toLocaleString('pt-BR')}</span>
-                        <span className="badge badge-green">🟢 ONLINE</span>
+                        <span className="badge-compact">🟢 ONLINE</span>
                     </div>
                 </div>
             </div>
 
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-4 p-6 overflow-hidden">
-                <div className="lg:col-span-3 space-y-4 flex flex-col overflow-auto">
-                    <div className="card bg-verde-escuro text-white shadow-md">
+            {/* Conteúdo Principal */}
+            <div className="pdv-content">
+                {/* Painel Esquerdo: Operação */}
+                <div className="pdv-left-panel">
+                    <div className="card-pdv bg-verde-escuro text-white flex-shrink-0">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-lg font-bold">🔓 CAIXA ABERTO</h3>
-                                <p className="text-green-300 text-sm">ID: CAIXA-001</p>
+                                <h3 className="text-xs font-bold">🔓 CAIXA ABERTO</h3>
+                                <p className="text-green-300 text-[10px]">ID: CAIXA-001</p>
                             </div>
-                            <span className="text-4xl">💳</span>
+                            <span className="text-xl">💳</span>
                         </div>
                     </div>
 
-                    <div className="card relative">
-                        <label className="block text-sm font-bold text-gray-700 mb-2">🔍 BUSCAR PRODUTO (F1)</label>
+                    <div className="card-pdv relative flex-shrink-0">
+                        <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase">🔍 Buscar Produto (F1)</label>
                         <div className="relative">
                             <input
                                 ref={inputRef}
@@ -412,111 +414,135 @@ const PDV = () => {
                                         selecionarProduto(sugestoesProducts[0]);
                                     }
                                 }}
-                                placeholder="Código, nome ou ID..."
-                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-verde-principal text-lg font-semibold"
+                                placeholder="Código ou nome..."
+                                className="search-input-pdv"
                             />
-                            {carregandoSugestoes && <span className="absolute right-3 top-3 text-gray-400">⏳</span>}
+                            {carregandoSugestoes && <span className="absolute right-2 top-2 text-gray-400 text-xs">⏳</span>}
                         </div>
                         
                         {sugestoesProducts.length > 0 && (
-                            <div className="absolute top-20 left-0 right-0 bg-white border-2 border-verde-principal rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                            <div className="absolute top-14 left-0 right-0 bg-white border-2 border-verde-principal rounded-lg shadow-lg z-10 max-h-32 overflow-y-auto pdv-scrollbar">
                                 {sugestoesProducts.map(produto => (
                                     <button
                                         key={produto.id}
                                         onClick={() => selecionarProduto(produto)}
-                                        className="w-full text-left px-4 py-3 hover:bg-verde-claro border-b border-gray-200 transition-colors"
+                                        className="w-full text-left px-3 py-1.5 hover:bg-verde-claro border-b border-gray-100 transition-colors"
                                     >
-                                        <div className="font-semibold text-gray-800">{produto.nome}</div>
-                                        <div className="text-sm text-gray-600">{formatCurrency(produto.preco_venda)} • Estoque: {produto.estoque_atual}</div>
+                                        <div className="font-bold text-gray-800 text-[11px] truncate">{produto.nome}</div>
+                                        <div className="text-[10px] text-gray-600">{formatCurrency(produto.preco_venda)} • Est: {produto.estoque_atual}</div>
                                     </button>
                                 ))}
                             </div>
                         )}
                     </div>
 
-                    {produtoSelecionado && (
-                        <div className="card bg-verde-claro border-2 border-verde-principal">
-                            <div className="mb-4">
-                                <h4 className="text-lg font-bold text-gray-800">{produtoSelecionado.nome}</h4>
-                                <p className="text-sm text-gray-600">Código: {produtoSelecionado.codigo_barras}</p>
+                    {produtoSelecionado ? (
+                        <div className="card-pdv bg-verde-claro border-2 border-verde-principal flex-shrink-0 animate-fade-in">
+                            <div className="mb-2">
+                                <h4 className="text-xs font-bold text-gray-800 truncate">{produtoSelecionado.nome}</h4>
+                                <p className="text-[10px] text-gray-600">Código: {produtoSelecionado.codigo_barras || 'N/A'}</p>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div className="grid grid-cols-2 gap-2 mb-2">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Preço Unitário</label>
-                                    <div className="px-4 py-3 bg-white rounded-lg text-2xl font-bold text-verde-principal">
+                                    <label className="block text-[10px] font-semibold text-gray-700 mb-1">Preço Unit.</label>
+                                    <div className="px-2 py-1.5 bg-white rounded border border-verde-principal text-lg font-bold text-verde-principal text-center">
                                         {formatCurrency(produtoSelecionado.preco_venda)}
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">QTD / PESO</label>
+                                    <label className="block text-[10px] font-semibold text-gray-700 mb-1">QTD</label>
                                     <input
                                         type="number"
                                         step="0.001"
                                         value={quantidade}
                                         onChange={(e) => setQuantidade(e.target.value)}
-                                        className="w-full px-4 py-3 border-2 border-verde-principal rounded-lg font-semibold text-lg"
+                                        className="w-full px-2 py-1.5 border-2 border-verde-principal rounded font-bold text-lg text-center"
                                     />
                                 </div>
                             </div>
-                            <button onClick={adicionarAoCarrinho} className="w-full btn-primary">➕ Adicionar ao Carrinho</button>
+                            <button onClick={adicionarAoCarrinho} className="w-full btn-primary py-1.5 text-xs">➕ Adicionar Item</button>
+                        </div>
+                    ) : (
+                        <div className="card-pdv border-2 border-dashed border-gray-300 flex-1 flex items-center justify-center text-gray-400">
+                            <div className="text-center">
+                                <span className="text-3xl block mb-1">🍎</span>
+                                <p className="text-[10px]">Aguardando seleção...</p>
+                            </div>
                         </div>
                     )}
                 </div>
 
-                <div className="lg:col-span-2 flex flex-col space-y-4 overflow-auto">
-                    <div className="card flex-1 overflow-auto">
-                        <h2 className="text-xl font-bold text-gray-800 mb-4">🛒 Carrinho</h2>
-                        {carrinho.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-                                <span className="text-5xl mb-2">🛒</span>
-                                <p>Carrinho Vazio</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {carrinho.map((item) => (
-                                    <div key={item.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg hover:bg-verde-claro">
-                                        <div className="flex-1">
-                                            <div className="font-semibold text-gray-800">{item.descricao}</div>
-                                            <div className="text-sm text-gray-600">{item.quantidade} {item.tipo_venda} × {formatCurrency(item.preco_unitario)}</div>
+                {/* Painel Direito: Carrinho e Totais */}
+                <div className="pdv-right-panel">
+                    <div className="card-pdv flex-1 flex flex-col min-h-0">
+                        <h2 className="text-xs font-bold text-gray-800 mb-2 flex-shrink-0 flex items-center gap-1">
+                            <span>🛒 Carrinho</span>
+                            <span className="badge-compact">{carrinho.length}</span>
+                        </h2>
+                        
+                        <div className="cart-scroll pdv-scrollbar">
+                            {carrinho.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full text-gray-300 opacity-50">
+                                    <span className="text-4xl mb-1">🛒</span>
+                                    <p className="text-[10px]">Vazio</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-1">
+                                    {carrinho.map((item) => (
+                                        <div key={item.id} className="cart-item-compact">
+                                            <div className="flex-1 min-w-0 pr-2">
+                                                <div className="cart-item-name">{item.descricao}</div>
+                                                <div className="cart-item-qty">{item.quantidade} {item.tipo_venda} × {formatCurrency(item.preco_unitario)}</div>
+                                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                <div className="cart-item-price">{formatCurrency(item.subtotal)}</div>
+                                                <button onClick={() => removerDoCarrinho(item.id)} className="text-red-500 hover:text-red-700 text-[10px] font-bold">REMOVER</button>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <div className="font-bold text-verde-principal">{formatCurrency(item.subtotal)}</div>
-                                            <button onClick={() => removerDoCarrinho(item.id)} className="text-red-600 text-sm mt-1">Remover</button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    <div className="card bg-gradient-to-br from-verde-claro to-white border-2 border-verde-principal shadow-lg">
-                        <div className="space-y-3">
-                            <div className="flex justify-between pb-2 border-b border-gray-300">
-                                <span className="text-gray-700 font-semibold">Itens:</span>
-                                <span className="text-lg font-bold">{carrinho.length}</span>
+                    <div className="cart-summary flex-shrink-0">
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-center text-xs font-semibold text-gray-600">
+                                <span>Subtotal:</span>
+                                <span>{formatCurrency(calcularTotal())}</span>
                             </div>
-                            <div className="bg-white p-4 rounded-lg border-2 border-verde-principal">
-                                <p className="text-sm text-gray-600 mb-1">TOTAL A PAGAR</p>
-                                <p className="text-4xl font-black text-verde-escuro">{formatCurrency(calcularTotal())}</p>
+                            <div className="total-display mt-1">
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Total a Pagar</p>
+                                {formatCurrency(calcularTotal())}
                             </div>
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <button onClick={limparCarrinho} className="w-full btn-danger">🗑️ Cancelar Venda</button>
-                        <button onClick={() => carrinho.length > 0 && setMostrarModalPagamento(true)} disabled={carrinho.length === 0} className="w-full btn-warning">💳 PAGAMENTO (F6)</button>
+                    <div className="grid grid-cols-2 gap-2 flex-shrink-0">
+                        <button onClick={limparCarrinho} className="btn-danger py-2 text-xs font-bold uppercase tracking-tight">🗑️ Cancelar</button>
+                        <button 
+                            onClick={() => carrinho.length > 0 && setMostrarModalPagamento(true)} 
+                            disabled={carrinho.length === 0} 
+                            className="btn-warning py-2 text-xs font-bold uppercase tracking-tight disabled:opacity-50"
+                        >
+                            💳 Pagar (F6)
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div className="bg-verde-escuro text-white px-6 py-2 text-xs font-semibold flex items-center justify-between shadow-lg">
-                <div className="flex gap-4">
-                    <span><kbd className="bg-verde-principal px-2 py-1 rounded">F1</kbd> Buscar</span>
-                    <span><kbd className="bg-verde-principal px-2 py-1 rounded">F6</kbd> Pagamento</span>
-                    <span><kbd className="bg-verde-principal px-2 py-1 rounded">F12</kbd> Editar Qtd</span>
-                    <span><kbd className="bg-red-600 px-2 py-1 rounded">F4/ESC</kbd> Cancelar</span>
+            {/* Rodapé PDV: Atalhos */}
+            <div className="pdv-footer">
+                <div className="flex gap-3">
+                    <span><kbd>F1</kbd> Buscar</span>
+                    <span><kbd>F6</kbd> Pagamento</span>
+                    <span><kbd>F12</kbd> Quantidade</span>
+                    <span><kbd>F4</kbd> Cancelar Venda</span>
                 </div>
-                <span>🟢 Online</span>
+                <div className="flex items-center gap-2">
+                    <span className="opacity-75">v2.1.0</span>
+                    <span className="text-green-400">● ONLINE</span>
+                </div>
             </div>
 
             {mostrarModalPagamento && (
@@ -582,41 +608,41 @@ const ModalPagamento = ({ total, carrinho, onClose, onSuccess }) => {
     };
 
     return (
-        <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 animate-fade-in">
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">Finalizar Pagamento</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 max-w-lg w-full shadow-2xl animate-fade-in">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-gray-800">Finalizar Pagamento</h2>
+                    <button onClick={onClose} className="text-gray-400 text-2xl">×</button>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                    <div className="flex justify-between mb-2"><span>Subtotal:</span><span className="font-semibold">{formatCurrency(total)}</span></div>
-                    <div className="flex justify-between mb-2">
+                <div className="bg-gray-50 p-3 rounded-lg mb-4 border border-gray-200">
+                    <div className="flex justify-between mb-1 text-sm"><span>Subtotal:</span><span className="font-semibold">{formatCurrency(total)}</span></div>
+                    <div className="flex justify-between mb-1 text-sm">
                         <span>Desconto:</span>
-                        <input type="number" value={desconto} onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)} className="w-32 px-2 py-1 border rounded text-right" />
+                        <input type="number" value={desconto} onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)} className="w-24 px-1 py-0.5 border rounded text-right font-bold" />
                     </div>
-                    <div className="border-t pt-2 flex justify-between"><span className="text-lg font-bold">Total a Pagar:</span><span className="text-2xl font-bold text-verde-principal">{formatCurrency(totalComDesconto)}</span></div>
+                    <div className="border-t pt-1 flex justify-between items-center"><span className="font-bold">Total Final:</span><span className="text-xl font-black text-verde-principal">{formatCurrency(totalComDesconto)}</span></div>
                 </div>
-                <div className="mb-6">
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">Forma de Pagamento</label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="mb-4">
+                    <label className="block text-xs font-bold text-gray-700 mb-2 uppercase">Forma de Pagamento</label>
+                    <div className="grid grid-cols-2 gap-2">
                         {['DINHEIRO', 'CREDITO', 'DEBITO', 'PIX'].map(forma => (
-                            <button key={forma} onClick={() => setFormaPagamento(forma)} className={`p-4 rounded-lg border-2 transition-all ${formaPagamento === forma ? 'border-verde-principal bg-verde-claro' : 'border-gray-200 hover:border-verde-principal'}`}>
-                                <div className="text-2xl mb-2">{forma === 'DINHEIRO' ? '💵' : forma === 'PIX' ? '📱' : '💳'}</div>
-                                <div className="text-sm font-semibold">{forma}</div>
+                            <button key={forma} onClick={() => setFormaPagamento(forma)} className={`p-2 rounded border-2 transition-all flex items-center gap-2 ${formaPagamento === forma ? 'border-verde-principal bg-verde-claro' : 'border-gray-100 hover:border-verde-principal'}`}>
+                                <span className="text-xl">{forma === 'DINHEIRO' ? '💵' : forma === 'PIX' ? '📱' : '💳'}</span>
+                                <span className="text-[10px] font-bold">{forma}</span>
                             </button>
                         ))}
                     </div>
                 </div>
                 {formaPagamento === 'DINHEIRO' && (
-                    <div className="mb-6">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Valor Recebido</label>
-                        <input type="number" step="0.01" value={valorRecebido} onChange={(e) => setValorRecebido(parseFloat(e.target.value) || 0)} className="w-full px-4 py-3 border border-gray-300 rounded-lg text-xl font-bold" />
-                        {troco >= 0 && <div className="mt-2 text-lg text-gray-600">Troco: <span className="font-bold text-verde-principal">{formatCurrency(troco)}</span></div>}
+                    <div className="mb-4">
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Valor Recebido</label>
+                        <input type="number" step="0.01" value={valorRecebido} onChange={(e) => setValorRecebido(parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 border-2 border-gray-300 rounded font-bold text-lg" />
+                        {troco >= 0 && <div className="mt-1 text-sm font-bold text-gray-600 text-right">Troco: <span className="text-verde-principal">{formatCurrency(troco)}</span></div>}
                     </div>
                 )}
-                <div className="flex gap-4">
-                    <button onClick={onClose} className="flex-1 px-6 py-3 bg-gray-200 rounded-lg font-semibold">Cancelar</button>
-                    <button onClick={finalizarVenda} className="flex-1 btn-primary">✅ Finalizar Venda</button>
+                <div className="flex gap-2">
+                    <button onClick={onClose} className="flex-1 py-2 bg-gray-100 rounded font-bold text-xs">VOLTAR</button>
+                    <button onClick={finalizarVenda} className="flex-1 btn-primary py-2 text-xs font-bold">CONFIRMAR VENDA</button>
                 </div>
             </div>
         </div>
