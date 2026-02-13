@@ -264,7 +264,46 @@ const PDV = () => {
     const [mostrarModalPagamento, setMostrarModalPagamento] = useState(false);
     const [sugestoesProducts, setSugestoesProducts] = useState([]);
     const [carregandoSugestoes, setCarregandoSugestoes] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const inputRef = useRef(null);
+    const pdvContainerRef = useRef(null);
+
+    const toggleFullscreen = async () => {
+        try {
+            if (!isFullscreen) {
+                if (pdvContainerRef.current?.requestFullscreen) {
+                    await pdvContainerRef.current.requestFullscreen();
+                    setIsFullscreen(true);
+                } else if (pdvContainerRef.current?.webkitRequestFullscreen) {
+                    await pdvContainerRef.current.webkitRequestFullscreen();
+                    setIsFullscreen(true);
+                }
+            } else {
+                if (document.fullscreenElement) {
+                    await document.exitFullscreen();
+                    setIsFullscreen(false);
+                } else if (document.webkitFullscreenElement) {
+                    await document.webkitExitFullscreen();
+                    setIsFullscreen(false);
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao alternar tela cheia:', error);
+            showToast('Erro ao ativar tela cheia', 'error');
+        }
+    };
+
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement || !!document.webkitFullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+        };
+    }, []);
 
     useEffect(() => {
         if (inputRef.current) inputRef.current.focus();
@@ -291,6 +330,10 @@ const PDV = () => {
                     novoCarrinho[novoCarrinho.length - 1].subtotal = parseFloat(novaQuantidade) * novoCarrinho[novoCarrinho.length - 1].preco_unitario;
                     setCarrinho(novoCarrinho);
                 }
+            }
+            if (e.key === 'F11') {
+                e.preventDefault();
+                toggleFullscreen();
             }
         };
 
@@ -371,7 +414,7 @@ const PDV = () => {
     };
 
     return (
-        <div className="pdv-fullscreen">
+        <div className="pdv-fullscreen" ref={pdvContainerRef}>
             {/* Header PDV */}
             <div className="pdv-header">
                 <div className="flex items-center justify-between">
@@ -384,6 +427,13 @@ const PDV = () => {
                     </div>
                     <div className="flex gap-3 text-xs items-center">
                         <span>📅 {new Date().toLocaleString('pt-BR')}</span>
+                        <button
+                            onClick={toggleFullscreen}
+                            className="badge-compact bg-verde-principal hover:bg-verde-escuro text-white cursor-pointer transition-all px-2 py-1 rounded flex items-center gap-1"
+                            title="Tela Cheia (F11)"
+                        >
+                            {isFullscreen ? '⛶ Sair' : '⛶ Tela Cheia'}
+                        </button>
                         <span className="badge-compact">🟢 ONLINE</span>
                     </div>
                 </div>
@@ -542,7 +592,8 @@ const PDV = () => {
                     <span><kbd>F1</kbd> Buscar</span>
                     <span><kbd>F6</kbd> Pagamento</span>
                     <span><kbd>F12</kbd> Quantidade</span>
-                    <span><kbd>F4</kbd> Cancelar Venda</span>
+                    <span><kbd>F4</kbd> Cancelar</span>
+                    <span><kbd>F11</kbd> Tela Cheia</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="opacity-75">v2.1.0</span>
