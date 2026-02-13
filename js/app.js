@@ -9,6 +9,11 @@ const { useState, useEffect, useRef } = React;
 const SUPABASE_URL = 'https://jsyzvcijwtpmtgziwecm.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzeXp2Y2lqd3RwbXRneml3ZWNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NjYwNDYsImV4cCI6MjA4NjI0MjA0Nn0.pFrdmUwP2kU55Bo1oqYG20wKFbnA3DKHU80BShFV3nE';
 
+// Credenciais do Projeto Fresh Fare POS - Hortifruti Bom Preço
+// URL do Projeto: https://fresh-fare-pos-final.vercel.app
+// Anon Key (Pública - Segura para Frontend):
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzeXp2Y2lqd3RwbXRneml3ZWNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NjYwNDYsImV4cCI6MjA4NjI0MjA0Nn0.pFrdmUwP2kU55Bo1oqYG20wKFbnA3DKHU80BShFV3nE
+
 let supabase;
 if (typeof supabase === 'undefined' && window.supabase) {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
